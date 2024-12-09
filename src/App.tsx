@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TodoForm } from './components/TodoForm';
 import { TodoList } from './components/TodoList';
 import { Todo } from './types/todo';
-import { getTodos, createTodo, updateTodo, deleteTodo } from './utils/db';
+import { getTodos as getStoredTodos, saveTodos } from './utils/storage';
 import { CheckSquare } from 'lucide-react';
 
 function App() {
@@ -13,9 +13,9 @@ function App() {
     loadTodos();
   }, []);
 
-  const loadTodos = async () => {
+  const loadTodos = () => {
     try {
-      const loadedTodos = await getTodos();
+      const loadedTodos = getStoredTodos();
       setTodos(loadedTodos);
     } catch (error) {
       console.error('Failed to load todos:', error);
@@ -24,42 +24,44 @@ function App() {
     }
   };
 
-  const handleAddTodo = async (newTodo: Omit<Todo, 'id' | 'createdAt'>) => {
+  const handleAddTodo = (newTodo: Omit<Todo, 'id' | 'createdAt'>) => {
     try {
-      const todo = await createTodo(newTodo);
-      setTodos(prev => [todo, ...prev]);
+      const todo: Todo = {
+        ...newTodo,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      };
+      const updatedTodos = [todo, ...todos];
+      setTodos(updatedTodos);
+      saveTodos(updatedTodos);
     } catch (error) {
       console.error('Failed to create todo:', error);
     }
   };
 
-  const handleToggle = async (id: string) => {
+  const handleToggle = (id: string) => {
     try {
-      const todoToUpdate = todos.find(todo => todo.id === id);
-      if (!todoToUpdate) return;
-
-      const updatedTodo = await updateTodo(id, {
-        completed: !todoToUpdate.completed
-      });
-
-      setTodos(prev => prev.map(todo => 
-        todo.id === id ? updatedTodo : todo
-      ));
+      const updatedTodos = todos.map(todo =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      );
+      setTodos(updatedTodos);
+      saveTodos(updatedTodos);
     } catch (error) {
       console.error('Failed to toggle todo:', error);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     try {
-      await deleteTodo(id);
-      setTodos(prev => prev.filter(todo => todo.id !== id));
+      const updatedTodos = todos.filter(todo => todo.id !== id);
+      setTodos(updatedTodos);
+      saveTodos(updatedTodos);
     } catch (error) {
       console.error('Failed to delete todo:', error);
     }
   };
 
-  const handleEdit = async (id: string) => {
+  const handleEdit = (id: string) => {
     // Implement edit functionality in a future update
     console.log('Edit todo:', id);
   };
@@ -98,5 +100,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
