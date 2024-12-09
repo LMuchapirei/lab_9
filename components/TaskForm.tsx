@@ -62,7 +62,7 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="priority">Priority</Label>
-        <Select value={priority} onValueChange={setPriority}>
+        <Select value={priority} onValueChange={setPriority as any}>
           <SelectTrigger>
             <SelectValue placeholder="Select priority" />
           </SelectTrigger>
